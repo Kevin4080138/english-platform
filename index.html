@@ -645,12 +645,7 @@ body {
       <div class="sb-level-name">A1 — Beginner</div>
       <span class="sb-level-arrow">›</span>
     </div>
-    <div class="sb-lessons open">
-      <div class="sb-lesson" onclick="openLesson('A1',1)" id="sb-A1-1">👋 Greetings & Farewells </div>
-      <div class="sb-lesson" onclick="openLesson('A1',2)" id="sb-A1-2">📚 Classroom Language </div>
-      <div class="sb-lesson" onclick="openLesson('A1',3)" id="sb-A1-3">🔢 Numbers, Dates & Time </div>
-      <div class="sb-lesson" onclick="openLesson('A1',4)" id="sb-A1-4">🔵 To Be Verb — am/is/are <span class="sb-lesson-badge">YANGI</span></div>
-    </div>
+    <div class="sb-lessons open" id="sb-A1-lessons"></div>
   </div>
   <div class="sb-level">
     <div class="sb-level-header" onclick="toggleSbLevel(this,'A2')">
@@ -826,36 +821,10 @@ body {
       <span class="progress-pct" id="prog-pct">0%</span>
     </div>
   </div>
-  <div class="lesson-list">
-    <div class="lesson-list-item" onclick="openLesson('A1',1)">
-      <span class="day-badge a1-badge">A1 · Lesson 1</span>
-      <span class="lesson-list-title">👋 Greetings &amp; Farewells — Salomlashish va Xayrlashish</span>
-      <span class="lesson-list-arrow">›</span>
-    </div>
-    <div class="lesson-list-item" onclick="openLesson('A1',2)">
-      <span class="day-badge a1-badge">A1 · Lesson 2</span>
-      <span class="lesson-list-title">📚 Classroom Language — Sinf va O'quv Tili</span>
-      <span class="lesson-list-arrow">›</span>
-    </div>
-    <div class="lesson-list-item" onclick="openLesson('A1',3)">
-      <span class="day-badge a1-badge">A1 · Lesson 3</span>
-      <span class="lesson-list-title">🔢 Numbers, Dates &amp; Time — Sonlar, Sanalar va Vaqt</span>
-      <span class="lesson-list-arrow">›</span>
-    </div>
-    <div class="lesson-list-item" onclick="openLesson('A1',4)">
-      <span class="day-badge a1-badge">A1 · Lesson 4</span>
-      <span class="lesson-list-title">🔵 To Be Verb — "To be" Fe'li (am / is / are)</span>
-      <span class="lesson-list-arrow">›</span>
-    </div>
+  <div class="lesson-list" id="a1-lesson-list"></div>
   </div>
 </div>
-<div class="content-panel" id="panel-A1-1"></div>
-
-<div class="content-panel" id="panel-A1-2"></div>
-
-<div class="content-panel" id="panel-A1-3"></div>
-
-<div class="content-panel" id="panel-A1-4"></div>
+<div id="a1-panels"></div>
 
 <div class="content-panel" id="panel-A2">
   <div class="level-header-bar">
@@ -933,8 +902,59 @@ body {
 
 
 
-<script src="lessons.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// ══════════════════════════════════════════════════════════════
+//  SUPABASE — darslar bazadan o'qiladi (admin paneldan tahrirlanadi)
+// ══════════════════════════════════════════════════════════════
+var SB_URL = 'https://xduxfntreowcyzibocxn.supabase.co';
+var SB_KEY = 'sb_publishable_tFJIGrkVfLB5EjfjZK0-BQ_oYhtPysT';
+var sb = window.supabase.createClient(SB_URL, SB_KEY);
+var LESSONS = {};  // bazadan to'ldiriladi
+
+// Darslarni bazadan yuklaydi
+async function loadLessonsFromDB() {
+  try {
+    var res = await sb.from('lessons').select('id,data').order('id', { ascending: true });
+    if (res.error) { console.error('Baza xatosi:', res.error); return false; }
+    LESSONS = {};
+    (res.data || []).forEach(function(row) { LESSONS[row.id] = row.data; });
+    return true;
+  } catch (e) { console.error(e); return false; }
+}
+
+// Sidebar, overview ro'yxati va dars panellarini bazadagi darslar bo'yicha yaratadi
+function buildLessonNav() {
+  var ids = Object.keys(LESSONS).map(Number).sort(function(a,b){ return a-b; });
+  var sbList = document.getElementById('sb-A1-lessons');
+  var llList = document.getElementById('a1-lesson-list');
+  var panels = document.getElementById('a1-panels');
+  if (sbList) sbList.innerHTML = '';
+  if (llList) llList.innerHTML = '';
+  if (panels) panels.innerHTML = '';
+  ids.forEach(function(n) {
+    var L = LESSONS[n];
+    var title = (L && L.title) ? L.title : ('Lesson ' + n);
+    var badge = (L && L.badge) ? L.badge : ('A1 · Lesson ' + n);
+    if (sbList) sbList.insertAdjacentHTML('beforeend',
+      '<div class="sb-lesson" id="sb-A1-' + n + '" onclick="openLesson(\'A1\',' + n + ')">' + esc(title) + '</div>');
+    if (llList) llList.insertAdjacentHTML('beforeend',
+      '<div class="lesson-list-item" onclick="openLesson(\'A1\',' + n + ')">'
+      + '<span class="day-badge a1-badge">' + esc(badge) + '</span>'
+      + '<span class="lesson-list-title">' + esc(title) + '</span>'
+      + '<span class="lesson-list-arrow">\u203a</span></div>');
+    if (panels) panels.insertAdjacentHTML('beforeend',
+      '<div class="content-panel" id="panel-A1-' + n + '"></div>');
+  });
+}
+
+// dayConfig (ball hisoblash) ni darslar bo'yicha quradi
+function buildDayConfig() {
+  dayConfig = {};
+  Object.keys(LESSONS).forEach(function(n) {
+    dayConfig[n] = { scoreId:'d'+n+'-score', msgId:'d'+n+'-score-msg', progId:'d'+n+'-prog-fill', progPct:'d'+n+'-prog-pct', mini:'d'+n+'-mini', panel:'panel-A1-'+n };
+  });
+}
 // ── THEME ──
 function toggleTheme() {
   var html = document.documentElement;
@@ -1128,12 +1148,7 @@ function saveScores() {
 // Endi scores bo'sh emas, balki saqlangandan o'qib olamiz:
 var scores = loadScores();
 // Har bir kun (dars) uchun ekrandagi element ID'lari:
-var dayConfig = {
-  '1': { scoreId:'d1-score', msgId:'d1-score-msg', progId:'d1-prog-fill', progPct:'d1-prog-pct', mini:'d1-mini', panel:'panel-A1-1' },
-  '2': { scoreId:'d2-score', msgId:'d2-score-msg', progId:'d2-prog-fill', progPct:'d2-prog-pct', mini:'d2-mini', panel:'panel-A1-2' },
-  '3': { scoreId:'d3-score', msgId:'d3-score-msg', progId:'d3-prog-fill', progPct:'d3-prog-pct', mini:'d3-mini', panel:'panel-A1-3' },
-  '4': { scoreId:'d4-score', msgId:'d4-score-msg', progId:'d4-prog-fill', progPct:'d4-prog-pct', mini:'d4-mini', panel:'panel-A1-4' },
-};
+var dayConfig = {};  // buildDayConfig() bazadagi darslar bo'yicha to'ldiradi
 
 // Mashq ID'sidan kun raqamini ajratib olamiz. Masalan 'd3t5' -> '3'
 function getDay(id) {
@@ -1427,11 +1442,11 @@ function renderLesson(n, L) {
 
 // Hamma 4 darsni chizadi (sahifa ochilganda chaqiriladi)
 function renderAllLessons() {
-  if (typeof LESSONS === 'undefined') return;
-  for (var n = 1; n <= 4; n++) {
+  if (typeof LESSONS === 'undefined' || !LESSONS) return;
+  Object.keys(LESSONS).forEach(function(n) {
     var panel = document.getElementById('panel-A1-' + n);
     if (panel && LESSONS[n]) panel.innerHTML = renderLesson(n, LESSONS[n]);
-  }
+  });
 }
 
 // Fill/Translate javobini tekshiradi (javob HTML ichida emas, ANSWERS dan o'qiladi)
@@ -1516,14 +1531,23 @@ function shuffleAllOptions() {
 }
 
 // ── SAHIFA OCHILGANDA: aralashtirish + saqlangan ballarni tiklash ──
-(function init() {
-  renderAllLessons();   // 1) darslarni ma'lumotdan chizamiz
-  shuffleAllOptions();  // 2) variantlarni aralashtiramiz
-  addSpeakButtons();    // 3) 🔊 tugmalarni qo'shamiz
+async function boot() {
+  var ok = await loadLessonsFromDB();   // 1) darslarni bazadan yuklaymiz
+  if (!ok) {
+    var ll = document.getElementById('a1-lesson-list');
+    if (ll) ll.innerHTML = '<div style="padding:1rem;color:var(--muted)">Darslarni yuklab bo\'lmadi. Internet aloqasini tekshiring va sahifani yangilang.</div>';
+    return;
+  }
+  buildDayConfig();     // 2) ball hisoblash sozlamasi
+  buildLessonNav();     // 3) sidebar, ro'yxat, panellarni yaratamiz
+  renderAllLessons();   // 4) darslarni chizamiz
+  shuffleAllOptions();  // 5) variantlarni aralashtiramiz
+  addSpeakButtons();    // 6) 🔊 tugmalar
   var days = Object.keys(dayConfig);
   for (var i = 0; i < days.length; i++) recountDay(days[i]);
   updateOverallProgress();
-})();
+}
+boot();
 </script>
 </body>
 </html>

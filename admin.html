@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — English Journey</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --border:#2a3240;
+    --text:#e6edf3; --muted:#8b97a7; --accent:#1db88e; --accent2:#3a9ed4;
+    --danger:#e5534b; --ok:#1db88e; --warn:#d39a3a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:15px}
+  h1,h2,h3{margin:0}
+  button{font-family:inherit;cursor:pointer;border:none;border-radius:8px;font-size:14px}
+  input,textarea{font-family:inherit;font-size:14px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:.55rem .7rem;width:100%}
+  input:focus,textarea:focus{outline:none;border-color:var(--accent)}
+  textarea{resize:vertical;min-height:70px;line-height:1.5}
+  .muted{color:var(--muted)}
+
+  /* ===== LOGIN ===== */
+  #login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+  .login-box{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:2rem;width:100%;max-width:380px}
+  .login-box h1{font-size:1.4rem;margin-bottom:.3rem}
+  .login-box p{margin:0 0 1.4rem;color:var(--muted);font-size:13px}
+  .login-box label{display:block;font-size:13px;color:var(--muted);margin:.9rem 0 .35rem}
+  .btn-primary{background:var(--accent);color:#06231b;font-weight:700;padding:.7rem 1rem;width:100%;margin-top:1.3rem}
+  .btn-primary:hover{filter:brightness(1.08)}
+  .login-err{color:var(--danger);font-size:13px;margin-top:.9rem;min-height:18px}
+
+  /* ===== ADMIN ===== */
+  #admin-screen{max-width:920px;margin:0 auto;padding:1rem 1rem 5rem}
+  .topbar{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;padding:1rem 0 1.2rem;border-bottom:1px solid var(--border);margin-bottom:1.2rem}
+  .topbar h1{font-size:1.25rem;margin-right:auto}
+  .topbar .who{font-size:13px;color:var(--muted)}
+  .btn-ghost{background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:.5rem .8rem}
+  .btn-ghost:hover{border-color:var(--accent)}
+  .btn-danger{background:transparent;color:var(--danger);border:1px solid var(--danger);padding:.5rem .8rem}
+  .btn-danger:hover{background:var(--danger);color:#fff}
+
+  .tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+  .tab{background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:.5rem .9rem;border-radius:20px;font-size:13px}
+  .tab.active{background:var(--accent);color:#06231b;font-weight:700;border-color:var(--accent)}
+  .tab.add{border-style:dashed;color:var(--muted)}
+
+  .actionbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;position:sticky;top:0;background:var(--bg);padding:.7rem 0;z-index:5;border-bottom:1px solid var(--border);margin-bottom:1rem}
+  .btn-save{background:var(--accent);color:#06231b;font-weight:700;padding:.6rem 1.1rem}
+  .btn-save:hover{filter:brightness(1.08)}
+  .status{font-size:13px;margin-left:auto}
+  .status.ok{color:var(--ok)} .status.err{color:var(--danger)} .status.dirty{color:var(--warn)}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.2rem;margin-bottom:1rem}
+  .card > h2{font-size:1rem;margin-bottom:.9rem;display:flex;align-items:center;gap:.5rem}
+  .card > h2 .count{font-size:12px;color:var(--muted);font-weight:400}
+  .field{margin-bottom:.8rem}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:.3rem}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+  @media(max-width:560px){.row2{grid-template-columns:1fr}}
+
+  .item{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:.85rem;margin-bottom:.7rem}
+  .item-head{display:flex;align-items:center;gap:.5rem;margin-bottom:.55rem}
+  .item-head .n{font-size:12px;color:var(--muted);font-weight:700}
+  .x{margin-left:auto;background:transparent;color:var(--danger);border:1px solid transparent;padding:.2rem .5rem;font-size:16px;line-height:1;border-radius:6px}
+  .x:hover{border-color:var(--danger)}
+  .opt-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem}
+  .opt-row input[type=text]{flex:1}
+  .opt-correct{display:flex;align-items:center;gap:.3rem;font-size:12px;color:var(--muted);white-space:nowrap}
+  .opt-correct input{width:auto}
+  .add-btn{background:transparent;color:var(--accent);border:1px dashed var(--accent);padding:.45rem .8rem;font-size:13px;margin-top:.3rem}
+  .add-btn:hover{background:rgba(29,184,142,.08)}
+  .hint{font-size:12px;color:var(--muted);margin-top:.3rem}
+  .empty{color:var(--muted);font-size:13px;padding:.4rem 0}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>🔐 Admin Panel</h1>
+    <p>English Journey — darslarni boshqarish</p>
+    <label>Email</label>
+    <input id="login-email" type="email" autocomplete="username" placeholder="email@example.com"/>
+    <label>Parol</label>
+    <input id="login-pass" type="password" autocomplete="current-password" placeholder="••••••••"/>
+    <button class="btn-primary" id="login-btn">Kirish</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ===================== ADMIN ===================== -->
+<div id="admin-screen">
+  <div class="topbar">
+    <h1>📚 Darslar boshqaruvi</h1>
+    <span class="who" id="who"></span>
+    <button class="btn-ghost" onclick="window.open('index.html','_blank')">Saytni ko'rish ↗</button>
+    <button class="btn-ghost" id="logout-btn">Chiqish</button>
+  </div>
+
+  <div class="tabs" id="lesson-tabs"></div>
+
+  <div class="actionbar">
+    <button class="btn-save" id="save-btn">💾 Saqlash</button>
+    <button class="btn-danger" id="delete-btn">🗑 Darsni o'chirish</button>
+    <span class="status" id="status"></span>
+  </div>
+
+  <div id="editor"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ===================== SUPABASE =====================
+var SB_URL = 'https://xduxfntreowcyzibocxn.supabase.co';
+var SB_KEY = 'sb_publishable_tFJIGrkVfLB5EjfjZK0-BQ_oYhtPysT';
+var sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+var DATA = {};        // { id: lessonData }
+var ORDER = [];       // sorted id list
+var currentId = null;
+var dirty = false;
+
+// ===================== KICHIK YORDAMCHI (DOM) =====================
+function h(tag, attrs, kids){
+  var e = document.createElement(tag);
+  attrs = attrs || {};
+  for (var k in attrs){
+    if (k === 'class') e.className = attrs[k];
+    else if (k === 'value') e.value = attrs[k];
+    else if (k === 'checked') e.checked = attrs[k];
+    else if (k === 'html') e.innerHTML = attrs[k];
+    else if (k.slice(0,2) === 'on') e.addEventListener(k.slice(2).toLowerCase(), attrs[k]);
+    else if (attrs[k] != null && attrs[k] !== false) e.setAttribute(k, attrs[k]);
+  }
+  (kids || []).forEach(function(c){
+    if (c == null || c === false) return;
+    e.appendChild(c.nodeType ? c : document.createTextNode(c));
+  });
+  return e;
+}
+function blankLesson(n){
+  return { badge:'A1 · Lesson '+n, title:'Yangi dars', overview:{en:'',uz:''},
+           vocab:[], story:'', storyNote:'', test:[], fill:[], translate:[], wr:[] };
+}
+function setStatus(msg, cls){
+  var s = document.getElementById('status');
+  s.textContent = msg; s.className = 'status ' + (cls||'');
+}
+function markDirty(){ dirty = true; setStatus('• saqlanmagan o\'zgarishlar', 'dirty'); }
+
+// ===================== AUTENTIFIKATSIYA =====================
+async function init(){
+  var s = await sb.auth.getSession();
+  if (s.data && s.data.session) { showAdmin(s.data.session.user); }
+  else { document.getElementById('login-screen').style.display='flex'; }
+}
+document.getElementById('login-btn').addEventListener('click', login);
+document.getElementById('login-pass').addEventListener('keydown', function(e){ if(e.key==='Enter') login(); });
+
+async function login(){
+  var email = document.getElementById('login-email').value.trim();
+  var pass  = document.getElementById('login-pass').value;
+  var err = document.getElementById('login-err');
+  err.textContent = '';
+  if (!email || !pass){ err.textContent='Email va parolni kiriting.'; return; }
+  document.getElementById('login-btn').textContent = 'Kirilyapti...';
+  var res = await sb.auth.signInWithPassword({ email:email, password:pass });
+  document.getElementById('login-btn').textContent = 'Kirish';
+  if (res.error){ err.textContent = 'Kirib bo\'lmadi: ' + res.error.message; return; }
+  showAdmin(res.data.user);
+}
+document.getElementById('logout-btn').addEventListener('click', async function(){
+  await sb.auth.signOut();
+  location.reload();
+});
+
+async function showAdmin(user){
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-screen').style.display = 'block';
+  document.getElementById('who').textContent = user.email || '';
+  await loadData();
+}
+
+// ===================== MA'LUMOT YUKLASH =====================
+async function loadData(){
+  setStatus('Yuklanyapti...', '');
+  var res = await sb.from('lessons').select('id,data').order('id', { ascending:true });
+  if (res.error){ setStatus('Yuklab bo\'lmadi: ' + res.error.message, 'err'); return; }
+  DATA = {}; ORDER = [];
+  (res.data||[]).forEach(function(r){ DATA[r.id] = r.data; ORDER.push(r.id); });
+  if (ORDER.length === 0){ currentId = null; }
+  else if (currentId == null || DATA[currentId] == null){ currentId = ORDER[0]; }
+  dirty = false;
+  renderTabs(); render(); setStatus('Tayyor', 'ok');
+}
+
+// ===================== DARS TABLARI =====================
+function renderTabs(){
+  var wrap = document.getElementById('lesson-tabs');
+  wrap.innerHTML = '';
+  ORDER.forEach(function(id){
+    var L = DATA[id];
+    var label = (L && L.title) ? L.title : ('Dars ' + id);
+    if (label.length > 34) label = label.slice(0,32) + '…';
+    wrap.appendChild(h('button', {
+      class: 'tab' + (id===currentId ? ' active':''),
+      onclick: function(){ switchLesson(id); }
+    }, [ id + '. ' + label ]));
+  });
+  wrap.appendChild(h('button', { class:'tab add', onclick: addLesson }, ['➕ Yangi dars']));
+}
+function switchLesson(id){
+  if (dirty && !confirm('Saqlanmagan o\'zgarishlar bor. Baribir boshqa darsga o\'tasizmi?')) return;
+  currentId = id; dirty = false; setStatus('', '');
+  renderTabs(); render();
+}
+function addLesson(){
+  var nextId = ORDER.length ? Math.max.apply(null, ORDER.map(Number)) + 1 : 1;
+  DATA[nextId] = blankLesson(nextId);
+  ORDER.push(nextId);
+  currentId = nextId;
+  renderTabs(); render();
+  setStatus('Yangi dars qo\'shildi — to\'ldiring va "Saqlash" bosing', 'dirty');
+  dirty = true;
+}
+
+// ===================== TAHRIRLOVCHI =====================
+function section(title, countText, body){
+  var head = [ title ];
+  if (countText != null) head.push(h('span',{class:'count'},[countText]));
+  var c = h('div',{class:'card'},[ h('h2',{},head) ]);
+  body.forEach(function(b){ c.appendChild(b); });
+  return c;
+}
+function textField(label, value, onInput, multiline){
+  var input = multiline
+    ? h('textarea', { value:value||'', oninput:function(e){ onInput(e.target.value); markDirty(); } })
+    : h('input', { type:'text', value:value||'', oninput:function(e){ onInput(e.target.value); markDirty(); } });
+  return h('div',{class:'field'},[ h('label',{},[label]), input ]);
+}
+function removeBtn(onClick){ return h('button',{class:'x',title:'O\'chirish',onclick:onClick},['✕']); }
+
+function render(){
+  var box = document.getElementById('editor');
+  box.innerHTML = '';
+  if (currentId == null){
+    box.appendChild(h('div',{class:'empty'},['Hali dars yo\'q. "➕ Yangi dars" bosing.']));
+    return;
+  }
+  var L = DATA[currentId];
+
+  // --- Asosiy ---
+  box.appendChild(section('📋 Asosiy', null, [
+    h('div',{class:'row2'},[
+      textField('Badge (masalan: A1 · Lesson 1)', L.badge, function(v){ L.badge=v; }),
+      textField('Sarlavha (title)', L.title, function(v){ L.title=v; renderTabsDebounced(); })
+    ]),
+    textField('Mavzu sharhi — English', L.overview.en, function(v){ L.overview.en=v; }, true),
+    textField('Mavzu sharhi — O\'zbekcha', L.overview.uz, function(v){ L.overview.uz=v; }, true)
+  ]));
+
+  // --- Lug'at ---
+  var vbody = [];
+  L.vocab.forEach(function(g, gi){
+    var words = [];
+    g.words.forEach(function(w, wi){
+      words.push(h('div',{class:'opt-row'},[
+        h('input',{type:'text',value:w.en||'',placeholder:'English',oninput:function(e){w.en=e.target.value;markDirty();}}),
+        h('input',{type:'text',value:w.uz||'',placeholder:'O\'zbekcha',oninput:function(e){w.uz=e.target.value;markDirty();}}),
+        h('input',{type:'text',value:w.pron||'',placeholder:'/talaffuz/',oninput:function(e){w.pron=e.target.value;markDirty();}}),
+        removeBtn(function(){ g.words.splice(wi,1); markDirty(); render(); })
+      ]));
+    });
+    var grp = h('div',{class:'item'},[
+      h('div',{class:'item-head'},[
+        h('span',{class:'n'},['Guruh ' + (gi+1)]),
+        removeBtn(function(){ L.vocab.splice(gi,1); markDirty(); render(); })
+      ]),
+      textField('Guruh nomi', g.title, function(v){ g.title=v; }),
+    ]);
+    words.forEach(function(x){ grp.appendChild(x); });
+    grp.appendChild(h('button',{class:'add-btn',onclick:function(){ g.words.push({en:'',uz:'',pron:''}); markDirty(); render(); }},['➕ So\'z']));
+    vbody.push(grp);
+  });
+  if (L.vocab.length===0) vbody.push(h('div',{class:'empty'},['Lug\'at guruhi yo\'q.']));
+  vbody.push(h('button',{class:'add-btn',onclick:function(){ L.vocab.push({title:'Yangi guruh',words:[]}); markDirty(); render(); }},['➕ Lug\'at guruhi']));
+  box.appendChild(section('📚 Lug\'at', wordCount(L)+' so\'z', vbody));
+
+  // --- Hikoya ---
+  box.appendChild(section('📖 Hikoya', null, [
+    textField('Hikoya matni (qalin so\'z uchun <strong>so\'z</strong> yozing)', L.story, function(v){ L.story=v; }, true),
+    textField('Izoh (storyNote)', L.storyNote, function(v){ L.storyNote=v; })
+  ]));
+
+  // --- Test (MCQ) ---
+  box.appendChild(mcqSection('📝 Test (variantli)', L.test, true));
+
+  // --- Fill ---
+  box.appendChild(typeSection('✏️ Fill — bo\'sh joyni to\'ldirish', L.fill));
+
+  // --- Translate ---
+  box.appendChild(typeSection('🔄 Translate — tarjima', L.translate));
+
+  // --- Write Right (wr) ---
+  box.appendChild(mcqSection('✍️ To\'g\'risini tanlash', L.wr, false));
+}
+
+function wordCount(L){ return L.vocab.reduce(function(a,g){return a+g.words.length;},0); }
+
+// MCQ-style section: items with options + one correct. isTest=true -> q_en/q_uz; false (wr) -> label
+function mcqSection(title, arr, isTest){
+  var body = [];
+  arr.forEach(function(it, i){
+    var item = h('div',{class:'item'},[
+      h('div',{class:'item-head'},[
+        h('span',{class:'n'},['#'+(i+1)]),
+        removeBtn(function(){ arr.splice(i,1); markDirty(); render(); })
+      ])
+    ]);
+    if (isTest){
+      item.appendChild(textField('Savol — English', it.q_en, function(v){ it.q_en=v; }));
+      item.appendChild(textField('Savol — O\'zbekcha (ixtiyoriy)', it.q_uz, function(v){ it.q_uz=v; }));
+    } else {
+      item.appendChild(textField('Yozuv / so\'z (label)', it.label, function(v){ it.label=v; }));
+    }
+    it.options.forEach(function(o, oi){
+      item.appendChild(h('div',{class:'opt-row'},[
+        h('input',{type:'text',value:o.text||'',placeholder:'Variant',oninput:function(e){o.text=e.target.value;markDirty();}}),
+        h('label',{class:'opt-correct'},[
+          h('input',{type:'radio',name:title+'-'+i,checked:!!o.correct,onchange:function(){ it.options.forEach(function(x){x.correct=false;}); o.correct=true; markDirty(); }}),
+          'to\'g\'ri'
+        ]),
+        removeBtn(function(){ it.options.splice(oi,1); markDirty(); render(); })
+      ]));
+    });
+    item.appendChild(h('button',{class:'add-btn',onclick:function(){ it.options.push({text:'',correct:false}); markDirty(); render(); }},['➕ Variant']));
+    body.push(item);
+  });
+  if (arr.length===0) body.push(h('div',{class:'empty'},['Savol yo\'q.']));
+  body.push(h('button',{class:'add-btn',onclick:function(){
+    arr.push(isTest ? {q_en:'',q_uz:'',options:[]} : {label:'',options:[]});
+    markDirty(); render();
+  }},['➕ Savol qo\'shish']));
+  return section(title, arr.length+' savol', body);
+}
+
+// Type-in section (fill / translate): q + answers[]
+function typeSection(title, arr){
+  var body = [];
+  arr.forEach(function(it, i){
+    body.push(h('div',{class:'item'},[
+      h('div',{class:'item-head'},[
+        h('span',{class:'n'},['#'+(i+1)]),
+        removeBtn(function(){ arr.splice(i,1); markDirty(); render(); })
+      ]),
+      textField('Savol / topshiriq', it.q, function(v){ it.q=v; }),
+      textField('To\'g\'ri javob(lar) — har qatorda bittadan', (it.answers||[]).join('\n'),
+        function(v){ it.answers = v.split('\n').map(function(s){return s.trim();}).filter(Boolean); }, true),
+      h('div',{class:'hint'},['Bir nechta to\'g\'ri variant bo\'lsa, har birini yangi qatorga yozing.'])
+    ]));
+  });
+  if (arr.length===0) body.push(h('div',{class:'empty'},['Savol yo\'q.']));
+  body.push(h('button',{class:'add-btn',onclick:function(){ arr.push({q:'',answers:[]}); markDirty(); render(); }},['➕ Savol qo\'shish']));
+  return section(title, arr.length+' savol', body);
+}
+
+// title o'zgarganda tablarni biroz keyin yangilash (har harfda emas)
+var _t;
+function renderTabsDebounced(){ clearTimeout(_t); _t = setTimeout(renderTabs, 400); }
+
+// ===================== SAQLASH / O'CHIRISH =====================
+document.getElementById('save-btn').addEventListener('click', saveCurrent);
+async function saveCurrent(){
+  if (currentId == null) return;
+  setStatus('Saqlanyapti...', '');
+  var res = await sb.from('lessons').upsert({
+    id: Number(currentId),
+    data: DATA[currentId],
+    updated_at: new Date().toISOString()
+  });
+  if (res.error){ setStatus('Saqlanmadi: ' + res.error.message, 'err'); return; }
+  dirty = false;
+  setStatus('✓ Saqlandi', 'ok');
+  renderTabs();
+}
+
+document.getElementById('delete-btn').addEventListener('click', deleteCurrent);
+async function deleteCurrent(){
+  if (currentId == null) return;
+  var L = DATA[currentId];
+  if (!confirm('"' + ((L&&L.title)||('Dars '+currentId)) + '" darsini butunlay o\'chirasizmi? Bu amalni qaytarib bo\'lmaydi.')) return;
+  setStatus('O\'chirilyapti...', '');
+  var res = await sb.from('lessons').delete().eq('id', Number(currentId));
+  if (res.error){ setStatus('O\'chirilmadi: ' + res.error.message, 'err'); return; }
+  delete DATA[currentId];
+  ORDER = ORDER.filter(function(x){ return x !== currentId; });
+  currentId = ORDER.length ? ORDER[0] : null;
+  dirty = false;
+  renderTabs(); render();
+  setStatus('✓ O\'chirildi', 'ok');
+}
+
+// boshlash
+init();
+</script>
+</body>
+</html>
