@@ -1531,7 +1531,24 @@ function shuffleAllOptions() {
 }
 
 // ── SAHIFA OCHILGANDA: aralashtirish + saqlangan ballarni tiklash ──
+// Har bir daraja sahifasiga "← Bosh sahifa" tugmasini qo'shadi
+function addLevelBackButtons() {
+  var bars = document.querySelectorAll('.content-panel .level-header-bar');
+  for (var i = 0; i < bars.length; i++) {
+    var bar = bars[i];
+    var prev = bar.previousElementSibling;
+    if (prev && prev.classList && prev.classList.contains('level-back-btn')) continue; // takror qo'shmaslik
+    var btn = document.createElement('button');
+    btn.className = 'back-btn level-back-btn';
+    btn.textContent = '\u2190 Bosh sahifa';
+    btn.style.marginBottom = '1rem';
+    btn.addEventListener('click', showHome);
+    bar.parentNode.insertBefore(btn, bar);
+  }
+}
+
 async function boot() {
+  addLevelBackButtons();                // 0) daraja sahifalariga orqaga tugma
   var ok = await loadLessonsFromDB();   // 1) darslarni bazadan yuklaymiz
   if (!ok) {
     var ll = document.getElementById('a1-lesson-list');
