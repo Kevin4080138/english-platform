@@ -622,6 +622,12 @@ body {
 .auth-switch{background:none;border:none;color:var(--accent);font-size:13px;margin-top:.5rem;cursor:pointer;width:100%;font-family:inherit}
 .auth-close{position:absolute;top:.8rem;right:.9rem;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer}
 #authArea{display:flex;align-items:center;gap:.5rem}
+/* ===== QULF (bosqich ochilishi) + XABAR ===== */
+.sb-lesson.locked{opacity:.5}
+.lesson-list-item.locked{opacity:.6;cursor:not-allowed}
+.lesson-lock{margin-left:auto;font-size:14px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:.7rem 1.1rem;border-radius:10px;font-size:13.5px;opacity:0;pointer-events:none;transition:all .3s;z-index:2000;max-width:90vw;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
@@ -920,6 +926,8 @@ body {
 
 
 
+<div id="toast" class="toast"></div>
+
 <!-- AUTH MODAL (login / ro'yxatdan o'tish) -->
 <div class="auth-overlay" id="authModal">
   <div class="auth-card">
@@ -957,6 +965,68 @@ async function loadLessonsFromDB() {
   } catch (e) { console.error(e); return false; }
 }
 
+// ══════════════════════════════════════════════════════════════
+//  BOSQICH OCHILISHI (unlock) — dars >=85% bo'lsa keyingisi ochiladi
+// ══════════════════════════════════════════════════════════════
+var UNLOCK_THRESHOLD = 85;  // keyingi dars ochilishi uchun kerakli foiz (xohlasangiz o'zgartiring)
+
+// Bitta darsning hozirgi foizini hisoblaydi
+function getLessonPct(n) {
+  var total = countDayTotal(n);
+  if (!total) return 0;
+  var sn = String(n);
+  var keys = Object.keys(scores).filter(function(k){ return getDay(k) === sn; });
+  var correct = keys.reduce(function(a,k){ return a + (scores[k] ? 1 : 0); }, 0);
+  return Math.round(correct / total * 100);
+}
+// Dars ochiqmi? (birinchi dars doim ochiq; qolgani avvalgisi >=85% bo'lsa)
+function isUnlocked(n) {
+  var ids = Object.keys(LESSONS).map(Number).sort(function(a,b){ return a-b; });
+  var idx = ids.indexOf(Number(n));
+  if (idx <= 0) return true;
+  return getLessonPct(ids[idx - 1]) >= UNLOCK_THRESHOLD;
+}
+// Sidebar va ro'yxatdagi qulf belgilarini yangilaydi
+var _lockState = {};
+var _locksReady = false;
+function refreshLocks() {
+  if (typeof LESSONS === 'undefined' || !LESSONS) return;
+  var ids = Object.keys(LESSONS).map(Number).sort(function(a,b){ return a-b; });
+  ids.forEach(function(n) {
+    var locked = !isUnlocked(n);
+    var sbItem = document.getElementById('sb-A1-' + n);
+    if (sbItem) {
+      sbItem.classList.toggle('locked', locked);
+      var base = sbItem.textContent.replace(/^\uD83D\uDD12\s*/, '');
+      sbItem.textContent = (locked ? '\uD83D\uDD12 ' : '') + base;
+    }
+    var ov = document.querySelector('.lesson-list-item[data-lesson="' + n + '"]');
+    if (ov) {
+      ov.classList.toggle('locked', locked);
+      var lk = ov.querySelector('.lesson-lock');
+      var ar = ov.querySelector('.lesson-list-arrow');
+      if (lk) lk.style.display = locked ? '' : 'none';
+      if (ar) ar.style.display = locked ? 'none' : '';
+    }
+    // qulflangan dars ochilganda tabrik (faqat sahifa to'liq yuklangach)
+    if (_locksReady && _lockState[n] === true && locked === false) {
+      showToast('\uD83C\uDF89 Tabriklaymiz! Keyingi dars ochildi.');
+    }
+    _lockState[n] = locked;
+  });
+}
+
+// Qisqa xabar (toast)
+var _toastT;
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(function(){ t.classList.remove('show'); }, 3200);
+}
+
 // Sidebar, overview ro'yxati va dars panellarini bazadagi darslar bo'yicha yaratadi
 function buildLessonNav() {
   var ids = Object.keys(LESSONS).map(Number).sort(function(a,b){ return a-b; });
@@ -971,15 +1041,17 @@ function buildLessonNav() {
     var title = (L && L.title) ? L.title : ('Lesson ' + n);
     var badge = (L && L.badge) ? L.badge : ('A1 · Lesson ' + n);
     if (sbList) sbList.insertAdjacentHTML('beforeend',
-      '<div class="sb-lesson" id="sb-A1-' + n + '" onclick="openLesson(\'A1\',' + n + ')">' + esc(title) + '</div>');
+      '<div class="sb-lesson" id="sb-A1-' + n + '" data-lesson="' + n + '" onclick="openLesson(\'A1\',' + n + ')">' + esc(title) + '</div>');
     if (llList) llList.insertAdjacentHTML('beforeend',
-      '<div class="lesson-list-item" onclick="openLesson(\'A1\',' + n + ')">'
+      '<div class="lesson-list-item" data-lesson="' + n + '" onclick="openLesson(\'A1\',' + n + ')">'
       + '<span class="day-badge a1-badge">' + esc(badge) + '</span>'
       + '<span class="lesson-list-title">' + esc(title) + '</span>'
+      + '<span class="lesson-lock" style="display:none">\uD83D\uDD12</span>'
       + '<span class="lesson-list-arrow">\u203a</span></div>');
     if (panels) panels.insertAdjacentHTML('beforeend',
       '<div class="content-panel" id="panel-A1-' + n + '"></div>');
   });
+  refreshLocks();
 }
 
 // dayConfig (ball hisoblash) ni darslar bo'yicha quradi
@@ -1064,6 +1136,13 @@ function closeAllDayCards() {
 
 // ── OPEN LESSON — opens a separate panel ──
 function openLesson(lvl, num) {
+  if (lvl === 'A1' && !isUnlocked(num)) {
+    var ids = Object.keys(LESSONS).map(Number).sort(function(a,b){ return a-b; });
+    var idx = ids.indexOf(Number(num));
+    var prevPct = idx > 0 ? getLessonPct(ids[idx - 1]) : 0;
+    showToast('\uD83D\uDD12 Bu dars qulflangan. Avvalgi darsni kamida ' + UNLOCK_THRESHOLD + '% bilan yakunlang. (Hozir: ' + prevPct + '%)');
+    return;
+  }
   var panelId = 'panel-' + lvl + '-' + num;
   var panel = document.getElementById(panelId);
   if (!panel) {
@@ -1266,6 +1345,7 @@ function record(id, ok) {
   saveScores();
   var d = getDay(id);
   if (d) recountDay(d);
+  refreshLocks();   // ball o'zgardi — qulflar yangilanadi (keyingi dars ochilishi mumkin)
 }
 
 // ── MCQ (Test) ──
@@ -1588,6 +1668,7 @@ function refreshAllCounts() {
   var days = Object.keys(dayConfig);
   for (var i = 0; i < days.length; i++) recountDay(days[i]);
   updateOverallProgress();
+  refreshLocks();   // bazadan natija kelgach qulflarni yangilaymiz
 }
 
 // Natijani bazaga yozadi (faqat login qilingan bo'lsa)
@@ -1726,7 +1807,9 @@ async function boot() {
   var days = Object.keys(dayConfig);
   for (var i = 0; i < days.length; i++) recountDay(days[i]);
   updateOverallProgress();
+  refreshLocks();         // panellar to'lgach + mahalliy natija bilan qulflar
   await checkSession();   // 7) login holatini tekshiramiz, natijani bazadan yuklaymiz
+  _locksReady = true;     // shundan keyin dars ochilsa tabrik chiqadi
 }
 boot();
 </script>
