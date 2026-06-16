@@ -195,7 +195,7 @@ body {
 }
 
 /* ══ CONTENT PANEL ══ */
-.content-panel { display:none; padding:1.75rem 2rem 4rem; }
+.content-panel { display:none; padding:1.75rem 2rem 4rem; max-width:1120px; margin:0 auto; }
 .content-panel.active { display:block; }
 
 /* ══ HOME PANEL ══ */
@@ -294,10 +294,18 @@ body {
 .progress-pct { font-size:13px; font-weight:600; color:var(--accent); min-width:36px; text-align:right; }
 
 /* Coming soon */
-.coming-soon { text-align:center; padding:5rem 2rem; color:var(--muted); }
-.coming-soon .cs-icon { font-size:3rem; margin-bottom:1rem; opacity:.4; }
+.coming-soon { text-align:center; padding:2.5rem 1.5rem 3.5rem; color:var(--muted); max-width:880px; margin:0 auto; }
+.coming-soon .cs-icon { font-size:2.3rem; margin-bottom:.5rem; opacity:.45; }
 .coming-soon h3 { font-family:'Playfair Display',serif; font-size:1.35rem; color:var(--text); margin-bottom:.5rem; }
 .coming-soon p { font-size:13.5px; line-height:1.7; }
+.cs-topics { margin:1.6rem auto 0; text-align:left; background:var(--surface2); border:1px solid var(--border2); border-radius:14px; padding:1.3rem 1.5rem; }
+.cs-topics h4 { font-size:12px; color:var(--muted); margin:0 0 .9rem; text-transform:uppercase; letter-spacing:.05em; font-weight:700; text-align:center; }
+.cs-topics .cs-std { color:var(--accent); }
+.cs-topics ul { margin:0; padding:0; list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:.55rem 1.1rem; }
+.cs-topics li { font-size:13.5px; color:var(--text); padding-left:1.4rem; position:relative; line-height:1.45; }
+.cs-topics li::before { content:'✓'; position:absolute; left:0; top:0; color:var(--accent); font-weight:800; }
+.cs-topics em { font-style:normal; color:var(--accent2); }
+@media (max-width:600px){ .cs-topics ul { grid-template-columns:1fr; } }
 
 /* ══ LESSON CARDS ══ */
 .day-card {
@@ -628,6 +636,14 @@ body {
 .lesson-lock{margin-left:auto;font-size:14px}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:.7rem 1.1rem;border-radius:10px;font-size:13.5px;opacity:0;pointer-events:none;transition:all .3s;z-index:2000;max-width:90vw;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.4)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== Daraja mavzulari ro'yxati ===== */
+.cs-topics{max-width:660px;margin:1.3rem auto 0;text-align:left}
+.cs-topics h4{font-size:13.5px;color:var(--muted);margin:0 0 .8rem;text-align:center;font-weight:600}
+.cs-topics ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:.5rem .8rem}
+.cs-topics li{display:flex;align-items:flex-start;gap:.55rem;font-size:13.5px;color:var(--text);background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:.5rem .7rem}
+.cs-topics li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:.4rem;flex-shrink:0}
+@media(max-width:600px){.cs-topics ul{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -855,13 +871,13 @@ body {
     <div class="level-icon" style="background:#3a9ed420;color:#3a9ed4">A2</div>
     <div class="level-header-text">
       <h2 style="color:#3a9ed4">A2 — Elementary</h2>
-      <p>Topics coming: Family & relationships, Daily routines, Shopping & money, Food & restaurants.</p>
+      <p>Asosiy daraja — kundalik muloqot, o'tmish va kelasi zamon.</p>
     </div>
   </div>
   <div class="coming-soon">
     <div class="cs-icon">🔒</div>
-    <h3>A2 — Coming Soon</h3>
-    <p>Kelgusi mavzular: Oila, Kundalik tartib, Xarid, Ovqat va restoranlar.</p>
+    <h3>A2 — Tez kunda</h3>
+    <div class="cs-topics"><h4>Bu darajada o'rganiladigan mavzular <span class="cs-std">(CEFR xalqaro standart)</span></h4><ul><li>Present Continuous (hozirgi davomli zamon)</li><li>Past Simple (oddiy o'tgan zamon)</li><li>Future: <em>be going to</em> &amp; <em>will</em> (kelasi zamon)</li><li>Comparatives &amp; Superlatives (qiyosiy darajalar)</li><li>Countable &amp; Uncountable nouns (some / any / much / many)</li><li>Adverbs of frequency (takror ravishlari)</li><li>Prepositions of time &amp; place (in / on / at)</li><li>Modal verbs: can, must, should</li><li>Object &amp; Possessive pronouns (olmoshlar)</li><li>Question forms &amp; negatives (savol va inkor)</li><li>Everyday vocabulary — 800–1000 so'z</li><li>Speaking about daily life (kundalik hayot)</li></ul></div>
   </div>
 </div>
 <div class="content-panel" id="panel-B1">
@@ -869,13 +885,13 @@ body {
     <div class="level-icon" style="background:#c9963e20;color:#c9963e">B1</div>
     <div class="level-header-text">
       <h2 style="color:#c9963e">B1 — Intermediate</h2>
-      <p>Topics coming: Work & career, Health, Environment, Technology, Culture & news.</p>
+      <p>O'rta daraja — erkinroq muloqot va murakkabroq grammatika.</p>
     </div>
   </div>
   <div class="coming-soon">
     <div class="cs-icon">🔒</div>
-    <h3>B1 — Coming Soon</h3>
-    <p>Kelgusi mavzular: Ish va martaba, Sog'liq, Atrof-muhit, Texnologiya.</p>
+    <h3>B1 — Tez kunda</h3>
+    <div class="cs-topics"><h4>Bu darajada o'rganiladigan mavzular <span class="cs-std">(CEFR xalqaro standart)</span></h4><ul><li>Present Perfect vs Past Simple</li><li>Past Continuous (o'tgan davomli zamon)</li><li>First &amp; Second Conditionals (shart gaplar 1–2)</li><li>Passive Voice — present &amp; past (majhul nisbat)</li><li>Reported Speech — statements (ko'chirma gap)</li><li>Relative clauses (who / which / that)</li><li>Modals of obligation &amp; deduction</li><li>Phrasal verbs (iborali fe'llar)</li><li><em>used to</em> (o'tmishdagi odat)</li><li>Gerunds &amp; Infinitives (-ing / to-)</li><li>Linking words (because, so, although)</li><li>Vocabulary — 1500–2000 so'z</li></ul></div>
   </div>
 </div>
 <div class="content-panel" id="panel-B2">
@@ -883,13 +899,13 @@ body {
     <div class="level-icon" style="background:#d4782a20;color:#d4782a">B2</div>
     <div class="level-header-text">
       <h2 style="color:#d4782a">B2 — Upper-Intermediate</h2>
-      <p>Topics coming: Academic writing, Debate & argumentation, Economy & business.</p>
+      <p>O'rtachadan yuqori — ishonchli, erkin ingliz tili.</p>
     </div>
   </div>
   <div class="coming-soon">
     <div class="cs-icon">🔒</div>
-    <h3>B2 — Coming Soon</h3>
-    <p>Kelgusi mavzular: Akademik yozuv, Munozara, Biznes, Etika.</p>
+    <h3>B2 — Tez kunda</h3>
+    <div class="cs-topics"><h4>Bu darajada o'rganiladigan mavzular <span class="cs-std">(CEFR xalqaro standart)</span></h4><ul><li>All tenses — review &amp; contrast (barcha zamonlar)</li><li>Present &amp; Past Perfect Continuous</li><li>Third &amp; Mixed Conditionals (shart gaplar 3, aralash)</li><li>Passive Voice — all forms</li><li>Reported Speech — full range</li><li>Defining &amp; non-defining relative clauses</li><li>Modal perfects (could have, should have...)</li><li><em>wish</em> / <em>if only</em> (afsus gaplari)</li><li>Causative — <em>have / get something done</em></li><li>Discourse markers (however, therefore...)</li><li>Collocations &amp; advanced phrasal verbs</li><li>Vocabulary — 2500–4000 so'z</li></ul></div>
   </div>
 </div>
 <div class="content-panel" id="panel-C1">
@@ -897,13 +913,13 @@ body {
     <div class="level-icon" style="background:#d94f4f20;color:#d94f4f">C1</div>
     <div class="level-header-text">
       <h2 style="color:#d94f4f">C1 — Advanced</h2>
-      <p>Topics coming: Academic discourse, Complex argumentation, IELTS 7+ preparation.</p>
+      <p>Ilg'or daraja — akademik va professional ingliz tili. (standart reja)</p>
     </div>
   </div>
   <div class="coming-soon">
     <div class="cs-icon">🔒</div>
-    <h3>C1 — Coming Soon</h3>
-    <p>Kelgusi mavzular: Akademik nutq, Murakkab argumentatsiya, IELTS 7+.</p>
+    <h3>C1 — Tez kunda</h3>
+    <div class="cs-topics"><h4>Bu darajada o'rganiladigan mavzular <span class="cs-std">(CEFR xalqaro standart)</span></h4><ul><li>Advanced tense &amp; aspect nuance</li><li>Inversion (Hardly..., Not only..., No sooner...)</li><li>Cleft sentences (It was... / What I need is...)</li><li>Advanced &amp; mixed conditionals</li><li>Nominalisation (akademik uslub)</li><li>Hedging &amp; emphasis (ehtiyotkor ifoda)</li><li>Ellipsis &amp; substitution</li><li>Advanced passive &amp; reporting structures</li><li>Idioms &amp; collocations</li><li>Register: formal vs informal</li><li>Cohesion &amp; coherence in writing</li><li>Academic vocabulary — 5000–8000 so'z</li></ul></div>
   </div>
 </div>
 <div class="content-panel" id="panel-C2">
@@ -911,13 +927,13 @@ body {
     <div class="level-icon" style="background:#8a6ec420;color:#8a6ec4">C2</div>
     <div class="level-header-text">
       <h2 style="color:#8a6ec4">C2 — Mastery</h2>
-      <p>Topics coming: Native-level fluency, Rhetoric & style, IELTS/TOEFL mastery.</p>
+      <p>Mukammallik — ona tili darajasidagi ingliz tili. (standart reja)</p>
     </div>
   </div>
   <div class="coming-soon">
     <div class="cs-icon">🔒</div>
-    <h3>C2 — Coming Soon</h3>
-    <p>Kelgusi mavzular: Ona tili darajasi, Ritorika, IELTS/TOEFL mukammalligi.</p>
+    <h3>C2 — Tez kunda</h3>
+    <div class="cs-topics"><h4>Bu darajada o'rganiladigan mavzular <span class="cs-std">(CEFR xalqaro standart)</span></h4><ul><li>Native-like fluency &amp; precision</li><li>Subtle modality &amp; connotation</li><li>Stylistics &amp; rhetoric (uslub va ritorika)</li><li>Marked word order &amp; emphasis</li><li>Advanced discourse &amp; pragmatics</li><li>Idiomatic &amp; figurative language</li><li>Complex subordination &amp; syntax</li><li>Precise lexis — collocation &amp; nuance</li><li>Academic &amp; professional writing</li><li>Understanding any accent / register</li><li>Paraphrasing &amp; summarising</li><li>Vocabulary — 10,000+ so'z</li></ul></div>
   </div>
 </div>
 
