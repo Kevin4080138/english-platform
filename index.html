@@ -605,6 +605,23 @@ body {
 .speak-btn:hover { background:var(--accent); color:#fff; transform:scale(1.1); }
 .speak-btn.speaking { background:var(--accent); color:#fff; animation:speakPulse .8s ease-in-out infinite; }
 @keyframes speakPulse { 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.15); } }
+/* ===== AUTH (login / ro'yxat) ===== */
+.auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem}
+.auth-overlay.open{display:flex}
+.auth-card{background:var(--sidebar-bg);border:1px solid var(--border2);border-radius:16px;padding:1.6rem;width:100%;max-width:360px;position:relative}
+.auth-card h2{margin:0 0 .3rem;font-size:1.3rem;color:var(--text)}
+.auth-sub{margin:0 0 1.1rem;font-size:13px;color:var(--muted)}
+.auth-card label{display:block;font-size:12px;color:var(--muted);margin:.7rem 0 .3rem}
+.auth-card input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:9px;padding:.6rem .7rem;color:var(--text);font-size:14px;font-family:inherit}
+.auth-card input:focus{outline:none;border-color:var(--accent)}
+.auth-submit{width:100%;margin-top:1.1rem;background:var(--accent);color:#06231b;font-weight:700;border:none;border-radius:9px;padding:.65rem;font-size:14px;cursor:pointer}
+.auth-submit:hover{filter:brightness(1.08)}
+.auth-err{font-size:13px;margin-top:.7rem;min-height:18px}
+.auth-err.bad{color:#e5534b}
+.auth-err.good{color:var(--accent)}
+.auth-switch{background:none;border:none;color:var(--accent);font-size:13px;margin-top:.5rem;cursor:pointer;width:100%;font-family:inherit}
+.auth-close{position:absolute;top:.8rem;right:.9rem;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer}
+#authArea{display:flex;align-items:center;gap:.5rem}
 </style>
 </head>
 <body>
@@ -626,6 +643,7 @@ body {
   <div class="topbar-right">
     <div class="stat-pill">A1: <strong><span id="stat-progress">0%</span></strong></div>
     <div class="stat-pill"><strong id="stat-words">80+</strong> so'z</div>
+    <div id="authArea"></div>
     <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
   </div>
 </div>
@@ -902,6 +920,22 @@ body {
 
 
 
+<!-- AUTH MODAL (login / ro'yxatdan o'tish) -->
+<div class="auth-overlay" id="authModal">
+  <div class="auth-card">
+    <button class="auth-close" onclick="closeAuth()">✕</button>
+    <h2 id="authTitle">Kirish</h2>
+    <p class="auth-sub">Hisob oching — natijalaringiz saqlanib, barcha qurilmada bir xil bo'ladi.</p>
+    <label>Email</label>
+    <input id="authEmail" type="email" autocomplete="username" placeholder="email@example.com"/>
+    <label>Parol</label>
+    <input id="authPass" type="password" autocomplete="current-password" placeholder="kamida 6 belgi" onkeydown="if(event.key==='Enter')submitAuth()"/>
+    <button class="auth-submit" id="authSubmit" onclick="submitAuth()">Kirish</button>
+    <div class="auth-err" id="authErr"></div>
+    <button class="auth-switch" id="authSwitch" onclick="switchAuthMode()">Hisobingiz yo'qmi? Ro'yxatdan o'ting</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ══════════════════════════════════════════════════════════════
@@ -1142,6 +1176,11 @@ function saveScores() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
   } catch (e) {
     // jim o'tamiz — saqlashning imkoni bo'lmasa ham sayt ishlayveradi
+  }
+  // login qilingan bo'lsa, bazaga ham yozamiz (tez-tez bosishda kutib turadi)
+  if (typeof currentUser !== 'undefined' && currentUser) {
+    clearTimeout(_progTimer);
+    _progTimer = setTimeout(saveProgressToDB, 800);
   }
 }
 
@@ -1531,6 +1570,130 @@ function shuffleAllOptions() {
 }
 
 // ── SAHIFA OCHILGANDA: aralashtirish + saqlangan ballarni tiklash ──
+// ══════════════════════════════════════════════════════════════
+//  FOYDALANUVCHI HISOBLARI + NATIJANI BAZAGA SAQLASH
+// ══════════════════════════════════════════════════════════════
+var currentUser = null;
+var _progTimer = null;
+var authMode = 'login';
+
+// Ikki natijani birlashtiradi (to'g'ri javob ustun: 1 g'olib)
+function mergeScores(a, b) {
+  var out = {};
+  for (var k in a) out[k] = a[k];
+  for (var k in b) out[k] = (out[k] || b[k]) ? 1 : 0;
+  return out;
+}
+function refreshAllCounts() {
+  var days = Object.keys(dayConfig);
+  for (var i = 0; i < days.length; i++) recountDay(days[i]);
+  updateOverallProgress();
+}
+
+// Natijani bazaga yozadi (faqat login qilingan bo'lsa)
+async function saveProgressToDB() {
+  if (!currentUser) return;
+  try {
+    await sb.from('progress').upsert({
+      user_id: currentUser.id,
+      scores: scores,
+      updated_at: new Date().toISOString()
+    });
+  } catch (e) { console.error('Natija saqlanmadi:', e); }
+}
+// Bazadan natijani yuklab, mahalliy bilan birlashtiradi
+async function loadProgressFromDB() {
+  if (!currentUser) return;
+  try {
+    var res = await sb.from('progress').select('scores').eq('user_id', currentUser.id).maybeSingle();
+    if (res.error) { console.error(res.error); return; }
+    var cloud = (res.data && res.data.scores) ? res.data.scores : {};
+    scores = mergeScores(cloud, scores);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(scores)); } catch (e) {}
+    await saveProgressToDB();   // birlashtirilgan natijani qaytarib yozamiz
+    refreshAllCounts();
+  } catch (e) { console.error(e); }
+}
+
+// Topbar'dagi auth holatini chizadi
+function renderAuthArea() {
+  var area = document.getElementById('authArea');
+  if (!area) return;
+  area.innerHTML = '';
+  if (currentUser) {
+    var email = currentUser.email || 'Foydalanuvchi';
+    var pill = document.createElement('span');
+    pill.className = 'stat-pill';
+    pill.title = email;
+    pill.textContent = '👤 ' + (email.length > 16 ? email.slice(0,14) + '…' : email);
+    var out = document.createElement('button');
+    out.className = 'theme-toggle';
+    out.textContent = 'Chiqish';
+    out.addEventListener('click', doLogout);
+    area.appendChild(pill); area.appendChild(out);
+  } else {
+    var inb = document.createElement('button');
+    inb.className = 'theme-toggle';
+    inb.textContent = 'Kirish';
+    inb.addEventListener('click', openAuth);
+    area.appendChild(inb);
+  }
+}
+
+// Sessiyani tekshiradi (sahifa ochilganda)
+async function checkSession() {
+  try {
+    var s = await sb.auth.getSession();
+    currentUser = (s.data && s.data.session) ? s.data.session.user : null;
+  } catch (e) { currentUser = null; }
+  renderAuthArea();
+  if (currentUser) await loadProgressFromDB();
+}
+
+// Modal boshqaruvi
+function openAuth(){ authMode='login'; updateAuthModal(); document.getElementById('authModal').classList.add('open'); }
+function closeAuth(){ document.getElementById('authModal').classList.remove('open'); setAuthErr('',''); }
+function switchAuthMode(){ authMode = (authMode==='login') ? 'signup' : 'login'; updateAuthModal(); }
+function updateAuthModal(){
+  document.getElementById('authTitle').textContent  = (authMode==='login') ? 'Kirish' : "Ro'yxatdan o'tish";
+  document.getElementById('authSubmit').textContent = (authMode==='login') ? 'Kirish' : "Ro'yxatdan o'tish";
+  document.getElementById('authSwitch').textContent = (authMode==='login')
+      ? "Hisobingiz yo'qmi? Ro'yxatdan o'ting" : 'Hisobingiz bormi? Kiring';
+  setAuthErr('','');
+}
+function setAuthErr(msg, kind){
+  var e = document.getElementById('authErr');
+  e.textContent = msg; e.className = 'auth-err ' + (kind||'');
+}
+
+async function submitAuth(){
+  var email = document.getElementById('authEmail').value.trim();
+  var pass  = document.getElementById('authPass').value;
+  if (!email || !pass){ setAuthErr('Email va parolni kiriting.','bad'); return; }
+  if (pass.length < 6){ setAuthErr("Parol kamida 6 belgi bo'lsin.",'bad'); return; }
+  var btn = document.getElementById('authSubmit'); btn.disabled = true; btn.textContent = '...';
+  var res;
+  if (authMode === 'signup') res = await sb.auth.signUp({ email:email, password:pass });
+  else                       res = await sb.auth.signInWithPassword({ email:email, password:pass });
+  btn.disabled = false; btn.textContent = (authMode==='login') ? 'Kirish' : "Ro'yxatdan o'tish";
+  if (res.error){ setAuthErr(res.error.message, 'bad'); return; }
+  if (res.data && res.data.session){
+    currentUser = res.data.session.user;
+    renderAuthArea(); closeAuth();
+    await loadProgressFromDB();
+  } else if (authMode === 'signup'){
+    setAuthErr("Emailingizga tasdiqlash xati yuborildi. Tasdiqlab, keyin kiring.", 'good');
+  } else {
+    setAuthErr("Kirib bo'lmadi. Qaytadan urinib ko'ring.", 'bad');
+  }
+}
+
+async function doLogout(){
+  try { await sb.auth.signOut(); } catch (e) {}
+  currentUser = null;
+  renderAuthArea();
+}
+
 // Har bir daraja sahifasiga "← Bosh sahifa" tugmasini qo'shadi
 function addLevelBackButtons() {
   var bars = document.querySelectorAll('.content-panel .level-header-bar');
@@ -1563,6 +1726,7 @@ async function boot() {
   var days = Object.keys(dayConfig);
   for (var i = 0; i < days.length; i++) recountDay(days[i]);
   updateOverallProgress();
+  await checkSession();   // 7) login holatini tekshiramiz, natijani bazadan yuklaymiz
 }
 boot();
 </script>
