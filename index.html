@@ -485,6 +485,64 @@ body {
 .score-label { color:var(--muted); font-size:13px; margin-top:5px; }
 .score-msg { margin-top:8px; font-size:14px; font-weight:500; }
 
+/* ══ GRAMMAR RULES (o'ziga xos bo'lim) ══ */
+.rules-grid { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+.rule-card {
+  background:linear-gradient(135deg,var(--surface2),var(--surface));
+  border:1px solid var(--border2); border-left:3px solid var(--accent);
+  border-radius:11px; padding:.85rem 1rem;
+}
+.rule-head { font-weight:700; color:var(--accent); font-size:14px; margin-bottom:.3rem; }
+.rule-body { font-size:13.5px; color:var(--text); line-height:1.55; }
+.rule-ex { margin-top:.45rem; font-size:12.5px; color:var(--muted); font-style:italic; border-top:1px dashed var(--border2); padding-top:.4rem; }
+
+/* ══ Mashq izohi ══ */
+.ex-hint { font-size:12.5px; color:var(--muted); margin-bottom:.9rem; line-height:1.5; }
+
+/* ══ 🔗 JUFTLASH (Matching) ══ */
+.match-wrap { display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:520px; }
+.match-col { display:flex; flex-direction:column; gap:9px; }
+.match-cell {
+  background:var(--surface2); border:1.5px solid var(--border2); color:var(--text);
+  border-radius:10px; padding:.7rem .85rem; font-size:14px; font-weight:500;
+  cursor:pointer; transition:.15s; text-align:center;
+}
+.match-cell:hover:not(.matched) { border-color:var(--accent); }
+.match-cell.sel { border-color:var(--accent); background:rgba(45,212,160,.14); box-shadow:0 0 0 2px rgba(45,212,160,.25); }
+.match-cell.matched { background:rgba(45,212,160,.16); border-color:var(--accent); color:var(--accent); cursor:default; opacity:.85; }
+.match-cell.match-wrong { border-color:#e5484d; background:rgba(229,72,77,.14); animation:matchShake .35s; }
+@keyframes matchShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+
+/* ══ 🧩 GAP TUZISH (Sentence Builder) ══ */
+.build-item {
+  background:var(--surface); border:1px solid var(--border2); border-radius:12px;
+  padding:1rem; margin-bottom:.9rem;
+}
+.build-item.build-correct { border-color:var(--accent); background:rgba(45,212,160,.07); }
+.build-item.build-incorrect { border-color:#e5484d; }
+.build-q { font-size:13.5px; font-weight:600; color:var(--text); margin-bottom:.6rem; }
+.build-hint-uz { font-weight:400; color:var(--muted); font-style:italic; }
+.build-answer {
+  min-height:46px; border:1.5px dashed var(--border2); border-radius:9px;
+  padding:.5rem; display:flex; flex-wrap:wrap; gap:7px; align-content:flex-start;
+  margin-bottom:.7rem; background:var(--surface2);
+}
+.build-pool { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:.7rem; }
+.build-chip {
+  background:var(--surface2); border:1.5px solid var(--border2); color:var(--text);
+  border-radius:8px; padding:.45rem .8rem; font-size:14px; font-weight:600;
+  cursor:pointer; transition:.13s;
+}
+.build-chip:hover { border-color:var(--accent); transform:translateY(-1px); }
+.build-chip.in-answer { background:rgba(45,212,160,.13); border-color:var(--accent); }
+.build-actions { display:flex; gap:8px; }
+.build-btn { border:none; border-radius:8px; padding:.5rem 1rem; font-size:13px; font-weight:600; cursor:pointer; transition:.15s; }
+.build-check { background:var(--accent); color:#06231a; }
+.build-check:hover { filter:brightness(1.08); }
+.build-check:disabled { opacity:.5; cursor:default; }
+.build-reset { background:var(--surface2); color:var(--muted); border:1px solid var(--border2); }
+.build-reset:hover { color:var(--text); }
+
 /* ══ RESPONSIVE ══ */
 @media(max-width:900px){
   .sidebar { width:220px; min-width:220px; }
@@ -498,6 +556,7 @@ body {
   .words-grid { grid-template-columns:1fr 1fr; }
   .tips-grid { grid-template-columns:1fr; }
   .wr-grid { grid-template-columns:1fr; }
+  .rules-grid { grid-template-columns:1fr; }
   .levels-grid { grid-template-columns:1fr 1fr; }
   .content-panel { padding:1.25rem 1rem 3rem; }
 }
@@ -986,6 +1045,14 @@ async function loadLessonsFromDB() {
 //  BOSQICH OCHILISHI (unlock) — dars >=85% bo'lsa keyingisi ochiladi
 // ══════════════════════════════════════════════════════════════
 var UNLOCK_THRESHOLD = 85;  // keyingi dars ochilishi uchun kerakli foiz (xohlasangiz o'zgartiring)
+var ADMIN_EMAIL = 'doctorarabboyev@gmail.com';  // bu hisob bilan kirilganda HAMMA dars ochiq bo'ladi
+// Hozirgi foydalanuvchi admin (o'qituvchi)mi?
+function isAdmin() {
+  try {
+    return !!(currentUser && currentUser.email &&
+      currentUser.email.toLowerCase().trim() === ADMIN_EMAIL);
+  } catch (e) { return false; }
+}
 
 // Bitta darsning hozirgi foizini hisoblaydi
 function getLessonPct(n) {
@@ -998,6 +1065,7 @@ function getLessonPct(n) {
 }
 // Dars ochiqmi? (birinchi dars doim ochiq; qolgani avvalgisi >=85% bo'lsa)
 function isUnlocked(n) {
+  if (isAdmin()) return true;   // admin hisobi uchun hamma dars ochiq
   var ids = Object.keys(LESSONS).map(Number).sort(function(a,b){ return a-b; });
   var idx = ids.indexOf(Number(n));
   if (idx <= 0) return true;
@@ -1301,7 +1369,9 @@ function countDayTotal(dayNum) {
   var mcq  = p.querySelectorAll('.options').length;       // Test savollari
   var fill = p.querySelectorAll('.fill-exercise').length; // Fill + Translate (ikkalasi ham shu klass)
   var wr   = p.querySelectorAll('.wr-item').length;        // Write Right
-  return mcq + fill + wr;
+  var match = p.querySelectorAll('.match-left').length;    // Juftlash (har chap katak = 1)
+  var build = p.querySelectorAll('.build-item').length;    // Gap tuzish (har gap = 1)
+  return mcq + fill + wr + match + build;
 }
 
 // Bitta kunning progressini qayta hisoblaymiz va ekranga chizamiz.
@@ -1507,7 +1577,7 @@ function renderType(id, num, item, ph) {
 
 // Bitta darsni to'liq HTML qilib qaytaradi
 function renderLesson(n, L) {
-  var total = L.test.length + L.fill.length + L.translate.length + L.wr.length;
+  var total = (L.test||[]).length + (L.fill||[]).length + (L.translate||[]).length + (L.wr||[]).length + (L.match||[]).length + (L.build||[]).length;
   var h = '';
   h += '<div class="lesson-panel-header">'
      + '<button class="back-btn" onclick="goBackToLevel(\'A1\')">\u2190 A1 Darslar</button>'
@@ -1518,61 +1588,134 @@ function renderLesson(n, L) {
      + '<span id="d' + n + '-prog-pct">0 / ' + total + ' savol</span></div>'
      + '<div class="day-prog-track"><div class="day-prog-fill" id="d' + n + '-prog-fill" style="width:0%"></div></div></div>';
   h += '<div class="topic-info"><h3>\ud83d\udccc Topic Overview</h3><p>' + esc(L.overview.en) + '</p><p class="uz">' + esc(L.overview.uz) + '</p></div>';
+  // Grammar Rules (o'ziga xos bo'lim — qoida kartochkalari)
+  if (L.rules && L.rules.length) {
+    h += '<div class="section"><div class="section-title">\ud83d\udcd0 Grammar Rules \u2014 Qoidalar</div><div class="rules-grid">';
+    L.rules.forEach(function(r) {
+      h += '<div class="rule-card"><div class="rule-head">' + esc(r.title) + '</div>'
+         + '<div class="rule-body">' + esc(r.body) + '</div>'
+         + (r.example ? '<div class="rule-ex">' + esc(r.example) + '</div>' : '') + '</div>';
+    });
+    h += '</div></div>';
+  }
   // Vocabulary
-  h += '<div class="section"><div class="section-title">\ud83d\udcda Vocabulary \u2014 So\u2019zlar</div>';
-  L.vocab.forEach(function(g) {
-    h += '<div class="vocab-group"><span class="vocab-group-title">' + esc(g.title) + '</span><div class="words-grid">';
-    g.words.forEach(function(w) {
-      h += '<div class="word-card"><span class="word-en">' + esc(w.en) + '</span><span class="word-uz">' + esc(w.uz) + '</span><span class="word-pron">' + esc(w.pron) + '</span></div>';
+  if (L.vocab && L.vocab.length) {
+    h += '<div class="section"><div class="section-title">\ud83d\udcda Vocabulary \u2014 So\u2019zlar</div>';
+    L.vocab.forEach(function(g) {
+      h += '<div class="vocab-group"><span class="vocab-group-title">' + esc(g.title) + '</span><div class="words-grid">';
+      g.words.forEach(function(w) {
+        h += '<div class="word-card"><span class="word-en">' + esc(w.en) + '</span><span class="word-uz">' + esc(w.uz) + '</span><span class="word-pron">' + esc(w.pron) + '</span></div>';
+      });
+      h += '</div></div>';
     });
-    h += '</div></div>';
-  });
-  h += '</div>';
+    h += '</div>';
+  }
   // Story
-  h += '<div class="section"><div class="section-title">\ud83d\udcd6 Story En+Uz</div>'
-     + '<p style="font-size:13px;color:var(--muted);margin-bottom:.75rem;">Qalin ingliz so\u2019zlarni toping va tarjima qiling</p>'
-     + '<div class="story-box">' + L.story + '</div>';
-  if (L.storyNote) h += '<div class="story-note">' + esc(L.storyNote) + '</div>';
-  h += '</div>';
-  // Exercises with tabs
-  h += '<div class="section"><div class="section-title">\ud83c\udfaf Exercises \u2014 Mashqlar</div>'
-     + '<div class="tab-bar">'
-     + '<button class="tab-btn active" onclick="switchTab(event,\'day' + n + '\',\'test\')">\ud83d\udcdd Test</button>'
-     + '<button class="tab-btn" onclick="switchTab(event,\'day' + n + '\',\'fill\')">\u270f\ufe0f Fill in Blank</button>'
-     + '<button class="tab-btn" onclick="switchTab(event,\'day' + n + '\',\'translate\')">\ud83d\udd04 Translate</button>'
-     + '<button class="tab-btn" onclick="switchTab(event,\'day' + n + '\',\'wr\')">\u270d\ufe0f Write Right</button></div>';
-  // Test (MCQ)
-  h += '<div class="tab-content active" id="day' + n + '-test">';
-  L.test.forEach(function(q, i) {
-    var id = 'd' + n + 'q' + (i + 1);
-    h += '<div class="exercise" id="' + id + '"><div class="exercise-q"><span class="en">' + (i + 1) + '. ' + esc(q.q_en) + '</span>'
-       + (q.q_uz ? '<span class="uz">' + esc(q.q_uz) + '</span>' : '') + '</div><div class="options">';
-    q.options.forEach(function(o) {
-      h += '<button class="option-btn" onclick="chk(this,\'' + id + '\',' + (o.correct ? 'true' : 'false') + ')">' + esc(o.text) + '</button>';
-    });
-    h += '</div><div class="feedback" id="fb-' + id + '"></div></div>';
+  if (L.story) {
+    h += '<div class="section"><div class="section-title">\ud83d\udcd6 Story En+Uz</div>'
+       + '<p style="font-size:13px;color:var(--muted);margin-bottom:.75rem;">Qalin ingliz so\u2019zlarni toping va tarjima qiling</p>'
+       + '<div class="story-box">' + L.story + '</div>';
+    if (L.storyNote) h += '<div class="story-note">' + esc(L.storyNote) + '</div>';
+    h += '</div>';
+  }
+  // Exercises — dinamik tablar (faqat mavjud turlar ko'rinadi)
+  var EX = [
+    {key:'test',      label:'\ud83d\udcdd Test',          items:L.test},
+    {key:'fill',      label:'\u270f\ufe0f Fill in Blank', items:L.fill},
+    {key:'translate', label:'\ud83d\udd04 Translate',     items:L.translate},
+    {key:'wr',        label:'\u270d\ufe0f Write Right',   items:L.wr},
+    {key:'match',     label:'\ud83d\udd17 Juftlash',      items:L.match},
+    {key:'build',     label:'\ud83e\udde9 Gap tuzish',    items:L.build}
+  ].filter(function(t){ return t.items && t.items.length; });
+
+  h += '<div class="section"><div class="section-title">\ud83c\udfaf Exercises \u2014 Mashqlar</div>';
+  h += '<div class="tab-bar">';
+  EX.forEach(function(t, idx){
+    h += '<button class="tab-btn' + (idx === 0 ? ' active' : '') + '" onclick="switchTab(event,\'day' + n + '\',\'' + t.key + '\')">' + t.label + '</button>';
   });
+  h += '</div>';
+
+  EX.forEach(function(t, idx){
+    h += '<div class="tab-content' + (idx === 0 ? ' active' : '') + '" id="day' + n + '-' + t.key + '">';
+    if (t.key === 'test') {
+      t.items.forEach(function(q, i){
+        var id = 'd' + n + 'q' + (i + 1);
+        h += '<div class="exercise" id="' + id + '"><div class="exercise-q"><span class="en">' + (i + 1) + '. ' + esc(q.q_en) + '</span>'
+           + (q.q_uz ? '<span class="uz">' + esc(q.q_uz) + '</span>' : '') + '</div><div class="options">';
+        q.options.forEach(function(o){
+          h += '<button class="option-btn" onclick="chk(this,\'' + id + '\',' + (o.correct ? 'true' : 'false') + ')">' + esc(o.text) + '</button>';
+        });
+        h += '</div><div class="feedback" id="fb-' + id + '"></div></div>';
+      });
+    } else if (t.key === 'fill') {
+      t.items.forEach(function(it, i){ h += renderType('d' + n + 'f' + (i + 1), i + 1, it, 'Write here...'); });
+    } else if (t.key === 'translate') {
+      t.items.forEach(function(it, i){ h += renderType('d' + n + 't' + (i + 1), i + 1, it, 'English...'); });
+    } else if (t.key === 'wr') {
+      h += '<div class="wr-legend"><span><span class="dot-g"></span> Correct</span><span><span class="dot-r"></span> Wrong</span></div><div class="wr-grid">';
+      t.items.forEach(function(it, i){
+        h += '<div class="wr-item"><div class="wr-num">' + (i + 1) + '. ' + esc(it.label) + '</div><div class="wr-options">';
+        it.options.forEach(function(o){
+          h += '<button class="wr-opt" onclick="wrChk(this,\'' + (o.correct ? 'correct' : 'wrong') + '\')">' + esc(o.text) + '</button>';
+        });
+        h += '</div></div>';
+      });
+      h += '</div>';
+    } else if (t.key === 'match') {
+      h += renderMatchContent(n, t.items);
+    } else if (t.key === 'build') {
+      h += renderBuildContent(n, t.items);
+    }
+    h += '</div>';
+  });
+
+  // Score (mustaqil — har doim ko'rinadi)
   h += '<div class="score-section"><div class="score-big" id="d' + n + '-score">0</div><div class="score-label">/ ' + total + ' correct</div><div class="score-msg" id="d' + n + '-score-msg">Start! \u2014 Boshlang!</div></div>';
-  h += '</div>';
-  // Fill
-  h += '<div class="tab-content" id="day' + n + '-fill">';
-  L.fill.forEach(function(it, i) { h += renderType('d' + n + 'f' + (i + 1), i + 1, it, 'Write here...'); });
-  h += '</div>';
-  // Translate
-  h += '<div class="tab-content" id="day' + n + '-translate">';
-  L.translate.forEach(function(it, i) { h += renderType('d' + n + 't' + (i + 1), i + 1, it, 'English...'); });
-  h += '</div>';
-  // Write Right
-  h += '<div class="tab-content" id="day' + n + '-wr"><div class="wr-legend"><span><span class="dot-g"></span> Correct</span><span><span class="dot-r"></span> Wrong</span></div><div class="wr-grid">';
-  L.wr.forEach(function(it, i) {
-    h += '<div class="wr-item"><div class="wr-num">' + (i + 1) + '. ' + esc(it.label) + '</div><div class="wr-options">';
-    it.options.forEach(function(o) {
-      h += '<button class="wr-opt" onclick="wrChk(this,\'' + (o.correct ? 'correct' : 'wrong') + '\')">' + esc(o.text) + '</button>';
-    });
-    h += '</div></div>';
+  h += '</div>'; // close exercises section
+  return h;
+}
+
+// 🔗 Juftlash mashqi (chap ustun = aniq, o'ng ustun = aralash)
+function renderMatchContent(n, items){
+  var h = '<p class="ex-hint">Chap ustundan birni tanlang, keyin o\u2018ng ustundan to\u2018g\u2018ri juftini bosing.</p>';
+  h += '<div class="match-wrap"><div class="match-col">';
+  items.forEach(function(it, i){
+    var id = 'd' + n + 'm' + (i + 1);
+    h += '<button class="match-cell match-left" id="' + id + '" data-id="' + id + '" data-pair="' + i + '" data-side="left" onclick="matchPick(this)">' + esc(it.left) + '</button>';
+  });
+  h += '</div><div class="match-col">';
+  var rights = items.map(function(it, i){ return { text: it.right, pair: i }; });
+  for (var k = rights.length - 1; k > 0; k--){ var j = Math.floor(Math.random() * (k + 1)); var tmp = rights[k]; rights[k] = rights[j]; rights[j] = tmp; }
+  rights.forEach(function(r){
+    h += '<button class="match-cell match-right" data-pair="' + r.pair + '" data-side="right" onclick="matchPick(this)">' + esc(r.text) + '</button>';
   });
   h += '</div></div>';
-  h += '</div>'; // close exercises section
+  return h;
+}
+
+// 🧩 Gap tuzish mashqi (tarqoq so'zlardan gap yig'ish)
+function renderBuildContent(n, items){
+  var h = '<p class="ex-hint">So\u2018zlarni to\u2018g\u2018ri tartibda bosib, gap tuzing. So\u2018ngra "Tekshirish".</p>';
+  items.forEach(function(it, i){
+    var id = 'd' + n + 'b' + (i + 1);
+    ANSWERS[id] = [it.answer];
+    var ws = it.words.slice();
+    for (var k = ws.length - 1; k > 0; k--){ var j = Math.floor(Math.random() * (k + 1)); var tmp = ws[k]; ws[k] = ws[j]; ws[j] = tmp; }
+    h += '<div class="build-item" id="' + id + '">'
+       + '<div class="build-q">' + (i + 1) + '. <span class="build-hint-uz">' + esc(it.uz || '') + '</span></div>'
+       + '<div class="build-answer" id="' + id + '-ans"></div>'
+       + '<div class="build-pool" id="' + id + '-pool">';
+    ws.forEach(function(w){
+      h += '<button class="build-chip" onclick="buildPick(this,\'' + id + '\')">' + esc(w) + '</button>';
+    });
+    h += '</div>'
+       + '<div class="build-actions">'
+       + '<button class="build-btn build-check" onclick="buildCheck(\'' + id + '\')">\u2713 Tekshirish</button>'
+       + '<button class="build-btn build-reset" onclick="buildReset(\'' + id + '\')">\u21ba Qayta</button>'
+       + '</div>'
+       + '<div class="feedback" id="fb-' + id + '"></div>'
+       + '</div>';
+  });
   return h;
 }
 
@@ -1605,7 +1748,87 @@ function checkAnswer(id) {
   record(id, ok);
 }
 
-// ── TALAFFUZ (brauzerning tekin ovozi — speechSynthesis) ──
+// ── 🔗 JUFTLASH (Matching) ──
+var _matchSel = null;
+function matchPick(btn) {
+  if (btn.classList.contains('matched')) return;
+  if (btn.dataset.side === 'left') {
+    if (_matchSel) _matchSel.classList.remove('sel');
+    if (_matchSel === btn) { _matchSel = null; return; }   // qayta bosilsa — bekor qilamiz
+    _matchSel = btn; btn.classList.add('sel');
+    return;
+  }
+  // o'ng taraf bosildi
+  if (!_matchSel) return;
+  var left = _matchSel;
+  _matchSel = null;
+  if (left.dataset.pair === btn.dataset.pair) {
+    left.classList.remove('sel');
+    left.classList.add('matched');
+    btn.classList.add('matched');
+    record(left.dataset.id, true);
+  } else {
+    left.classList.remove('sel');
+    left.classList.add('match-wrong');
+    btn.classList.add('match-wrong');
+    setTimeout(function(){ left.classList.remove('match-wrong'); btn.classList.remove('match-wrong'); }, 450);
+  }
+}
+
+// ── 🧩 GAP TUZISH (Sentence Builder) ──
+function buildPick(chip, id) {
+  var ans = document.getElementById(id + '-ans');
+  if (!ans) return;
+  chip.classList.add('in-answer');
+  ans.appendChild(chip);                                   // javob qatoriga ko'chiramiz
+  chip.setAttribute('onclick', "buildUnpick(this,'" + id + "')");
+}
+function buildUnpick(chip, id) {
+  var pool = document.getElementById(id + '-pool');
+  if (!pool) return;
+  chip.classList.remove('in-answer');
+  pool.appendChild(chip);                                  // bankka qaytaramiz
+  chip.setAttribute('onclick', "buildPick(this,'" + id + "')");
+}
+function buildCheck(id) {
+  var item = document.getElementById(id);
+  var ans  = document.getElementById(id + '-ans');
+  var fb   = document.getElementById('fb-' + id);
+  if (!item || !ans) return;
+  var chips = ans.querySelectorAll('.build-chip');
+  var built = Array.prototype.map.call(chips, function(c){ return c.textContent.trim(); }).join(' ');
+  var correct = (ANSWERS[id] && ANSWERS[id][0]) ? ANSWERS[id][0] : '';
+  var norm = function(s){ return s.toLowerCase().replace(/[.,!?;:]/g,'').replace(/\s+/g,' ').trim(); };
+  var ok = built.length > 0 && norm(built) === norm(correct);
+  if (fb) fb.classList.add('show');
+  if (ok) {
+    item.classList.add('build-correct'); item.classList.remove('build-incorrect');
+    if (fb) { fb.classList.remove('err-fb'); fb.classList.add('ok-fb'); fb.textContent = "\u2713 Correct! \u2014 To'g'ri!"; }
+    var allChips = item.querySelectorAll('.build-chip');
+    Array.prototype.forEach.call(allChips, function(c){ c.style.pointerEvents = 'none'; });
+    var cb = item.querySelector('.build-check'); if (cb) cb.disabled = true;
+    record(id, true);
+  } else {
+    item.classList.add('build-incorrect');
+    if (fb) { fb.classList.remove('ok-fb'); fb.classList.add('err-fb'); fb.textContent = "\u2717 Tartibni tekshiring \u2014 qaytadan urinib ko'ring"; }
+  }
+}
+function buildReset(id) {
+  var item = document.getElementById(id);
+  var pool = document.getElementById(id + '-pool');
+  var ans  = document.getElementById(id + '-ans');
+  if (!item || !pool || !ans) return;
+  if (item.classList.contains('build-correct')) return;    // yechilgan bo'lsa, tegmaymiz
+  var chips = ans.querySelectorAll('.build-chip');
+  Array.prototype.forEach.call(chips, function(c){
+    c.classList.remove('in-answer');
+    c.setAttribute('onclick', "buildPick(this,'" + id + "')");
+    pool.appendChild(c);
+  });
+  item.classList.remove('build-incorrect');
+  var fb = document.getElementById('fb-' + id);
+  if (fb) { fb.classList.remove('show','ok-fb','err-fb'); fb.textContent = ''; }
+}
 function speak(text, btn) {
   if (!('speechSynthesis' in window)) {  // brauzer qo'llab-quvvatlamasa, jim o'tamiz
     return;
@@ -1746,6 +1969,7 @@ async function checkSession() {
   } catch (e) { currentUser = null; }
   renderAuthArea();
   if (currentUser) await loadProgressFromDB();
+  if (typeof refreshLocks === 'function') refreshLocks();  // admin bo'lsa hamma dars ochiladi
 }
 
 // Modal boshqaruvi
@@ -1779,6 +2003,7 @@ async function submitAuth(){
     currentUser = res.data.session.user;
     renderAuthArea(); closeAuth();
     await loadProgressFromDB();
+    if (typeof refreshLocks === 'function') refreshLocks();  // admin uchun darslar ochiladi
   } else if (authMode === 'signup'){
     setAuthErr("Emailingizga tasdiqlash xati yuborildi. Tasdiqlab, keyin kiring.", 'good');
   } else {
@@ -1790,6 +2015,7 @@ async function doLogout(){
   try { await sb.auth.signOut(); } catch (e) {}
   currentUser = null;
   renderAuthArea();
+  if (typeof refreshLocks === 'function') refreshLocks();  // chiqilgach qulflar qaytadi
 }
 
 // Har bir daraja sahifasiga "← Bosh sahifa" tugmasini qo'shadi
