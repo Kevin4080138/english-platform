@@ -95,7 +95,7 @@ body {
 
 /* ══ LAYOUT ══ */
 .layout {
-  display:flex;
+  display:block;
   padding-top:58px;
   min-height:100vh;
 }
@@ -188,7 +188,6 @@ body {
 
 /* ══ MAIN CONTENT ══ */
 .content {
-  flex:1;
   margin-left:260px;
   min-height:calc(100vh - 58px);
 }
@@ -485,16 +484,17 @@ body {
 .score-label { color:var(--muted); font-size:13px; margin-top:5px; }
 .score-msg { margin-top:8px; font-size:14px; font-weight:500; }
 
-/* ══ GRAMMAR RULES (o'ziga xos bo'lim) ══ */
-.rules-grid { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
-.rule-card {
+/* ══ GRAMMAR RULES (bitta katak, qatorlar) ══ */
+.rules-box {
   background:linear-gradient(135deg,var(--surface2),var(--surface));
-  border:1px solid var(--border2); border-left:3px solid var(--accent);
-  border-radius:11px; padding:.85rem 1rem;
+  border:1px solid var(--border2); border-radius:14px;
+  overflow:hidden;
 }
-.rule-head { font-weight:700; color:var(--accent); font-size:14px; margin-bottom:.3rem; }
-.rule-body { font-size:13.5px; color:var(--text); line-height:1.55; }
-.rule-ex { margin-top:.45rem; font-size:12.5px; color:var(--muted); font-style:italic; border-top:1px dashed var(--border2); padding-top:.4rem; }
+.rule-row { padding:.9rem 1.15rem; border-bottom:1px solid var(--border2); border-left:3px solid var(--accent); }
+.rule-row:last-child { border-bottom:none; }
+.rule-row-head { font-weight:700; color:var(--accent); font-size:14px; margin-bottom:.3rem; }
+.rule-row-body { font-size:13.5px; color:var(--text); line-height:1.55; }
+.rule-row-ex { margin-top:.45rem; font-size:12.5px; color:var(--muted); font-style:italic; }
 
 /* ══ Mashq izohi ══ */
 .ex-hint { font-size:12.5px; color:var(--muted); margin-bottom:.9rem; line-height:1.5; }
@@ -556,7 +556,6 @@ body {
   .words-grid { grid-template-columns:1fr 1fr; }
   .tips-grid { grid-template-columns:1fr; }
   .wr-grid { grid-template-columns:1fr; }
-  .rules-grid { grid-template-columns:1fr; }
   .levels-grid { grid-template-columns:1fr 1fr; }
   .content-panel { padding:1.25rem 1rem 3rem; }
 }
@@ -796,7 +795,7 @@ body {
       <div class="sb-coming">🔒 Tez orada...</div>
     </div>
   </div>
-    <div class="sb-version" style="padding:1rem 1.25rem .3rem;font-size:10.5px;color:var(--muted);opacity:.5;letter-spacing:.5px;">English Journey · v2.2</div>
+    <div class="sb-version" style="padding:1rem 1.25rem .3rem;font-size:10.5px;color:var(--muted);opacity:.5;letter-spacing:.5px;">English Journey · v2.3</div>
   </nav>
 
   <!-- CONTENT -->
@@ -1588,13 +1587,13 @@ function renderLesson(n, L) {
      + '<span id="d' + n + '-prog-pct">0 / ' + total + ' savol</span></div>'
      + '<div class="day-prog-track"><div class="day-prog-fill" id="d' + n + '-prog-fill" style="width:0%"></div></div></div>';
   h += '<div class="topic-info"><h3>\ud83d\udccc Topic Overview</h3><p>' + esc(L.overview.en) + '</p><p class="uz">' + esc(L.overview.uz) + '</p></div>';
-  // Grammar Rules (o'ziga xos bo'lim — qoida kartochkalari)
+  // Grammar Rules (bitta chiroyli katakda — qatorlar shaklida)
   if (L.rules && L.rules.length) {
-    h += '<div class="section"><div class="section-title">\ud83d\udcd0 Grammar Rules \u2014 Qoidalar</div><div class="rules-grid">';
+    h += '<div class="section"><div class="section-title">\ud83d\udcd0 Grammar Rules \u2014 Qoidalar</div><div class="rules-box">';
     L.rules.forEach(function(r) {
-      h += '<div class="rule-card"><div class="rule-head">' + esc(r.title) + '</div>'
-         + '<div class="rule-body">' + esc(r.body) + '</div>'
-         + (r.example ? '<div class="rule-ex">' + esc(r.example) + '</div>' : '') + '</div>';
+      h += '<div class="rule-row"><div class="rule-row-head">' + esc(r.title) + '</div>'
+         + '<div class="rule-row-body">' + esc(r.body) + '</div>'
+         + (r.example ? '<div class="rule-row-ex">' + esc(r.example) + '</div>' : '') + '</div>';
     });
     h += '</div></div>';
   }
